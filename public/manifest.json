@@ -1,0 +1,16 @@
+{
+  "name": "Dhikr - Tasbih & Spiritual Productivity",
+  "short_name": "Dhikr",
+  "description": "Tasbih Counter & Islamic Productivity App",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fbfbf9",
+  "theme_color": "#34a88f",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}
