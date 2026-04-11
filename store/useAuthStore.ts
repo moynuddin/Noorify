@@ -11,7 +11,7 @@ import {
   updateProfile,
   type User,
 } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebase";
+import { getFirebaseAuth, getGoogleProvider } from "@/lib/firebase";
 import {
   uploadLocalDataToFirestore,
   fetchUserData,
@@ -52,7 +52,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   error: null,
 
   initAuth: () => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(getFirebaseAuth(), async (user) => {
       set({ user, loading: false, initialized: true });
 
       if (user) {
@@ -83,7 +83,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   signInWithGoogle: async () => {
     set({ loading: true, error: null });
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithPopup(getFirebaseAuth(), getGoogleProvider());
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Sign-in failed";
       set({ error: message, loading: false });
@@ -93,7 +93,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   signInWithEmail: async (email, password) => {
     set({ loading: true, error: null });
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Sign-in failed";
       set({ error: message, loading: false });
@@ -104,7 +104,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     set({ loading: true, error: null });
     try {
       const credential = await createUserWithEmailAndPassword(
-        auth,
+        getFirebaseAuth(),
         email,
         password,
       );
@@ -120,7 +120,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   resetPassword: async (email) => {
     set({ error: null });
     try {
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordResetEmail(getFirebaseAuth(), email);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Password reset failed";
@@ -131,7 +131,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   signInAnonymously: async () => {
     set({ loading: true, error: null });
     try {
-      await firebaseSignInAnonymously(auth);
+      await firebaseSignInAnonymously(getFirebaseAuth());
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Anonymous sign-in failed";
@@ -145,8 +145,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
     set({ loading: true, error: null });
     try {
-      await linkWithPopup(user, googleProvider);
-      set({ user: auth.currentUser });
+      await linkWithPopup(user, getGoogleProvider());
+      set({ user: getFirebaseAuth().currentUser });
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Account linking failed";
@@ -157,7 +157,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   logout: async () => {
     set({ loading: true, error: null });
     try {
-      await firebaseSignOut(auth);
+      await firebaseSignOut(getFirebaseAuth());
       set({ user: null, loading: false });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Sign-out failed";

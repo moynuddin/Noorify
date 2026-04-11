@@ -1,5 +1,5 @@
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { db } from './firebase';
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { getFirebaseDb } from "./firebase";
 
 interface SyncableData {
   totalLifetimeCount: number;
@@ -21,9 +21,9 @@ interface SyncableData {
  */
 export async function uploadLocalDataToFirestore(
   uid: string,
-  localState: SyncableData
+  localState: SyncableData,
 ): Promise<void> {
-  const userRef = doc(db, 'users', uid);
+  const userRef = doc(getFirebaseDb(), "users", uid);
   const snapshot = await getDoc(userRef);
 
   if (snapshot.exists()) {
@@ -32,21 +32,19 @@ export async function uploadLocalDataToFirestore(
     const merged: SyncableData = {
       totalLifetimeCount: Math.max(
         remote.totalLifetimeCount || 0,
-        localState.totalLifetimeCount
+        localState.totalLifetimeCount,
       ),
       history: mergeHistory(remote.history || [], localState.history),
       streaks: {
         current: Math.max(
           remote.streaks?.current || 0,
-          localState.streaks.current
+          localState.streaks.current,
         ),
         best: Math.max(remote.streaks?.best || 0, localState.streaks.best),
         lastActiveDate:
           remote.streaks?.lastActiveDate || localState.streaks.lastActiveDate,
       },
-      badges: [
-        ...new Set([...(remote.badges || []), ...localState.badges]),
-      ],
+      badges: [...new Set([...(remote.badges || []), ...localState.badges])],
       dailyChallenge: localState.dailyChallenge, // prefer local (most recent)
     };
     await setDoc(userRef, merged, { merge: true });
@@ -61,10 +59,8 @@ export async function uploadLocalDataToFirestore(
 /**
  * Fetch user data from Firestore.
  */
-export async function fetchUserData(
-  uid: string
-): Promise<SyncableData | null> {
-  const userRef = doc(db, 'users', uid);
+export async function fetchUserData(uid: string): Promise<SyncableData | null> {
+  const userRef = doc(getFirebaseDb(), "users", uid);
   const snapshot = await getDoc(userRef);
   if (snapshot.exists()) {
     return snapshot.data() as SyncableData;
@@ -77,9 +73,9 @@ export async function fetchUserData(
  */
 export async function syncToFirestore(
   uid: string,
-  data: Partial<SyncableData>
+  data: Partial<SyncableData>,
 ): Promise<void> {
-  const userRef = doc(db, 'users', uid);
+  const userRef = doc(getFirebaseDb(), "users", uid);
   const snapshot = await getDoc(userRef);
   if (snapshot.exists()) {
     await updateDoc(userRef, data as Record<string, unknown>);
@@ -93,7 +89,7 @@ export async function syncToFirestore(
  */
 function mergeHistory(
   remote: { date: string; count: number }[],
-  local: { date: string; count: number }[]
+  local: { date: string; count: number }[],
 ): { date: string; count: number }[] {
   const map = new Map<string, number>();
   for (const r of remote) {
