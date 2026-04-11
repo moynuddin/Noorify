@@ -54,6 +54,7 @@ interface DhikrState {
   addCustomDhikr: (dhikr: DhikrType) => void;
   unlockBadge: (badgeId: string) => void;
   incrementGlobalSimulation: () => void;
+  hydrateFromRemote: (data: Partial<DhikrState>) => void;
 }
 
 export const useDhikrStore = create<DhikrState>()(
@@ -152,6 +153,9 @@ export const useDhikrStore = create<DhikrState>()(
         };
       }),
 
+      // After increment, trigger Firestore sync if authenticated
+      // This is called externally by wrapping components
+
       resetCounter: () => set({ currentCount: 0 }),
       
       setDhikr: (dhikr) => set({ currentDhikr: dhikr, currentCount: 0 }),
@@ -169,7 +173,19 @@ export const useDhikrStore = create<DhikrState>()(
 
       incrementGlobalSimulation: () => set((state) => ({
         globalCommunityCount: state.globalCommunityCount + Math.floor(Math.random() * 5) + 1
-      }))
+      })),
+
+      hydrateFromRemote: (data) => set((state) => ({
+        totalLifetimeCount: Math.max(state.totalLifetimeCount, data.totalLifetimeCount ?? 0),
+        history: data.history ?? state.history,
+        streaks: data.streaks ? {
+          current: Math.max(state.streaks.current, data.streaks.current ?? 0),
+          best: Math.max(state.streaks.best, data.streaks.best ?? 0),
+          lastActiveDate: data.streaks.lastActiveDate ?? state.streaks.lastActiveDate,
+        } : state.streaks,
+        badges: data.badges ? [...new Set([...state.badges, ...data.badges])] : state.badges,
+        dailyChallenge: data.dailyChallenge ?? state.dailyChallenge,
+      })),
     }),
     {
       name: 'dhikr-storage',
