@@ -1,6 +1,7 @@
 "use client";
 
 import { useDhikrStore, PREDEFINED_DHIKRS } from "@/store/useDhikrStore";
+import { usePreferencesStore } from "@/store/usePreferencesStore";
 import { motion, AnimatePresence } from "framer-motion";
 import { RotateCcw, ChevronDown, Wind, Sparkles, BookOpen } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
@@ -15,6 +16,7 @@ export default function Home() {
     setDhikr,
     dailyChallenge,
   } = useDhikrStore();
+  const { hapticEnabled } = usePreferencesStore();
   const [showSelector, setShowSelector] = useState(false);
   const [breathingMode, setBreathingMode] = useState(false);
   const [tapKey, setTapKey] = useState(0);
@@ -47,11 +49,42 @@ export default function Home() {
   );
 
   const handleTap = () => {
+    const isComplete = currentCount + 1 >= currentDhikr.target;
     increment();
     setTapKey((k) => k + 1);
     const id = Date.now();
     setFloaters((f) => [...f, id]);
     setTimeout(() => setFloaters((f) => f.filter((x) => x !== id)), 700);
+
+    if (!hapticEnabled) return;
+
+    // Vibration (Android Chrome + most Android browsers)
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(isComplete ? [40, 30, 80] : 18);
+    }
+
+    // Audio click using Web Audio API (works everywhere including iOS)
+    try {
+      const ctx = new (
+        window.AudioContext || (window as any).webkitAudioContext
+      )();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = isComplete ? "sine" : "sine";
+      osc.frequency.setValueAtTime(isComplete ? 660 : 480, ctx.currentTime);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(
+        0.0001,
+        ctx.currentTime + (isComplete ? 0.35 : 0.08),
+      );
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + (isComplete ? 0.35 : 0.08));
+      osc.onended = () => ctx.close();
+    } catch {
+      // AudioContext not available — silently skip
+    }
   };
 
   return (
