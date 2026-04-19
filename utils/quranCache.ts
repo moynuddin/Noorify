@@ -33,17 +33,32 @@ export async function fetchWithCache(url: string, forceNetwork = false) {
 
 export async function downloadSurahOffline(id: number): Promise<void> {
   const arUrl = `https://api.alquran.cloud/v1/surah/${id}/quran-uthmani`;
-  const enUrl = `https://api.alquran.cloud/v1/surah/${id}/en.asad`;
+  const enAsadUrl = `https://api.alquran.cloud/v1/surah/${id}/en.asad`;
+  const enSahihUrl = `https://api.alquran.cloud/v1/surah/${id}/en.sahih`;
+  const hiHindiUrl = `https://api.alquran.cloud/v1/surah/${id}/hi.hindi`;
+  
   // Force network to ensure we get a fresh copy and put to cache
-  await fetchWithCache(arUrl, true);
-  await fetchWithCache(enUrl, true);
+  await Promise.all([
+    fetchWithCache(arUrl, true),
+    fetchWithCache(enAsadUrl, true),
+    fetchWithCache(enSahihUrl, true),
+    fetchWithCache(hiHindiUrl, true)
+  ]);
 }
 
 export async function removeSurahFromCache(id: number): Promise<void> {
   if (typeof window === 'undefined' || !('caches' in window)) return;
   const cache = await caches.open(CACHE_NAME);
+  
   const arUrl = `https://api.alquran.cloud/v1/surah/${id}/quran-uthmani`;
-  const enUrl = `https://api.alquran.cloud/v1/surah/${id}/en.asad`;
-  await cache.delete(arUrl);
-  await cache.delete(enUrl);
+  const enAsadUrl = `https://api.alquran.cloud/v1/surah/${id}/en.asad`;
+  const enSahihUrl = `https://api.alquran.cloud/v1/surah/${id}/en.sahih`;
+  const hiHindiUrl = `https://api.alquran.cloud/v1/surah/${id}/hi.hindi`;
+  
+  await Promise.all([
+    cache.delete(arUrl),
+    cache.delete(enAsadUrl),
+    cache.delete(enSahihUrl),
+    cache.delete(hiHindiUrl)
+  ]);
 }

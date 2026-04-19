@@ -9,6 +9,8 @@ import {
   BookOpen,
   User,
   Compass,
+  GraduationCap,
+  Clock,
 } from "lucide-react";
 
 export function BottomNav() {
@@ -18,14 +20,16 @@ export function BottomNav() {
     { href: "/", label: "Tasbih", icon: Home },
     { href: "/quran", label: "Quran", icon: BookOpen },
     { href: "/qibla", label: "Qibla", icon: Compass },
+    { href: "/prayers", label: "Prayers", icon: Clock },
     { href: "/analytics", label: "Stats", icon: BarChart3 },
     { href: "/duas", label: "Duas", icon: BookHeart },
+    { href: "/learn", label: "Learn", icon: GraduationCap },
     { href: "/profile", label: "Profile", icon: User },
   ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card-bg/85 backdrop-blur-xl border-t border-card-border pb-[env(safe-area-inset-bottom)] overflow-x-auto hide-scrollbar">
-      <div className="max-w-md md:max-w-4xl mx-auto flex sm:grid sm:grid-cols-6 h-16 md:h-20 min-w-max sm:min-w-0 transition-all duration-300 px-2 sm:px-0">
+      <div className="max-w-md md:max-w-4xl mx-auto flex sm:grid sm:grid-cols-8 h-16 md:h-20 min-w-max sm:min-w-0 transition-all duration-300 px-2 sm:px-0">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
@@ -33,7 +37,7 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex-1 flex flex-col items-center justify-center gap-1 min-w-[72px] sm:min-w-0 transition-colors duration-200 ${
+              className={`flex-1 flex flex-col items-center justify-center gap-1 min-w-18 sm:min-w-0 transition-colors duration-200 ${
                 isActive
                   ? "text-brand-500"
                   : "text-foreground/60 hover:text-foreground/80"

@@ -13,9 +13,6 @@ import {
   Calendar,
   Sparkles,
   Medal,
-  Sun,
-  Moon,
-  Monitor,
   Bell,
   MapPin,
   Vibrate,
@@ -26,6 +23,12 @@ import {
 import Link from "next/link";
 import { format, subDays } from "date-fns";
 import { useState, useEffect } from "react";
+import {
+  PRAYER_LIST,
+  getTreeStage,
+  getNextMilestone,
+} from "@/constants/prayers";
+import { THEME_OPTIONS } from "@/constants/settings";
 
 export default function ProfilePage() {
   const { user, loading, logout, linkAnonymousToGoogle } = useAuthStore();
@@ -82,34 +85,9 @@ export default function ProfilePage() {
   const maxCount = Math.max(...last7Days.map((d) => d.count), 1);
 
   // Tree of Jannah
-  let TreeVisual = "🌱";
-  let TreeStatus = "A Seed Planted";
-  if (totalLifetimeCount > 100) {
-    TreeVisual = "🪴";
-    TreeStatus = "Sprouting Plant";
-  }
-  if (totalLifetimeCount > 1000) {
-    TreeVisual = "🌿";
-    TreeStatus = "Growing Sapling";
-  }
-  if (totalLifetimeCount > 5000) {
-    TreeVisual = "🌳";
-    TreeStatus = "Firmly Rooted Tree";
-  }
-  if (totalLifetimeCount > 10000) {
-    TreeVisual = "🌲";
-    TreeStatus = "Evergreen Cedar";
-  }
-  const nextMilestone =
-    totalLifetimeCount < 100
-      ? 100
-      : totalLifetimeCount < 1000
-        ? 1000
-        : totalLifetimeCount < 5000
-          ? 5000
-          : totalLifetimeCount < 10000
-            ? 10000
-            : 50000;
+  const { visual: TreeVisual, status: TreeStatus } =
+    getTreeStage(totalLifetimeCount);
+  const nextMilestone = getNextMilestone(totalLifetimeCount);
   const treeProgress = Math.min(
     (totalLifetimeCount / nextMilestone) * 100,
     100,
@@ -124,13 +102,7 @@ export default function ProfilePage() {
   );
   const completionRate = Math.round((activeDays.length / 30) * 100);
 
-  const prayers = [
-    { id: "fajr", label: "Fajr" },
-    { id: "dhuhr", label: "Dhuhr" },
-    { id: "asr", label: "Asr" },
-    { id: "maghrib", label: "Maghrib" },
-    { id: "isha", label: "Isha" },
-  ];
+  const prayers = PRAYER_LIST;
 
   const memberSince =
     user && !user.isAnonymous && user.metadata?.creationTime
@@ -427,11 +399,7 @@ export default function ProfilePage() {
           </h2>
           <div className="bg-card-bg border border-card-border rounded-3xl overflow-hidden shadow-sm">
             <div className="grid grid-cols-3 p-1 bg-foreground/5 gap-1 m-3 rounded-2xl">
-              {[
-                { id: "light", icon: Sun, label: "Light" },
-                { id: "dark", icon: Moon, label: "Dark" },
-                { id: "system", icon: Monitor, label: "System" },
-              ].map((t) => (
+              {THEME_OPTIONS.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => setTheme(t.id as "light" | "dark" | "system")}

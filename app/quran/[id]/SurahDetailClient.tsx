@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, Loader2, BookOpen } from "lucide-react";
 import { fetchWithCache } from "@/utils/quranCache";
-import { useQuranStore } from "@/store/useQuranStore";
+import { useQuranStore, TranslationOption } from "@/store/useQuranStore";
 
 interface Ayah {
   numberInSurah: number;
@@ -35,25 +35,27 @@ export default function SurahDetailClient({ id }: { id: number }) {
   const router = useRouter();
   
   const [arabicData, setArabicData] = useState<SurahData | null>(null);
-  const [englishData, setEnglishData] = useState<SurahData | null>(null);
+  const [translationData, setTranslationData] = useState<SurahData | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorOffline, setErrorOffline] = useState(false);
 
-  const { markDownloaded } = useQuranStore();
+  const { markDownloaded, selectedTranslation, setTranslation } = useQuranStore();
 
   useEffect(() => {
     if (!id) return;
     
     async function fetchSurah() {
+      setLoading(true);
+      setErrorOffline(false);
       try {
-        const [arJson, enJson] = await Promise.all([
+        const [arJson, transJson] = await Promise.all([
           fetchWithCache(`https://api.alquran.cloud/v1/surah/${id}/quran-uthmani`),
-          fetchWithCache(`https://api.alquran.cloud/v1/surah/${id}/en.asad`)
+          fetchWithCache(`https://api.alquran.cloud/v1/surah/${id}/${selectedTranslation}`)
         ]);
 
-        if (arJson.code === 200 && enJson.code === 200) {
+        if (arJson.code === 200 && transJson.code === 200) {
           setArabicData(arJson.data);
-          setEnglishData(enJson.data);
+          setTranslationData(transJson.data);
           
           markDownloaded(id);
         } else {
@@ -68,20 +70,32 @@ export default function SurahDetailClient({ id }: { id: number }) {
     }
     
     fetchSurah();
-  }, [id, markDownloaded]);
+  }, [id, markDownloaded, selectedTranslation]);
 
   const virtue = SURAH_VIRTUES[id];
 
   return (
     <div className="px-4 sm:px-8 md:px-12 py-6 md:py-10 pb-32 md:pb-40 min-h-screen transition-all duration-300">
       
-      <button 
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors mb-6"
-      >
-        <ArrowLeft size={20} />
-        <span className="font-medium">Back to Surahs</span>
-      </button>
+      <div className="flex items-center justify-between mb-6">
+        <button 
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors"
+        >
+          <ArrowLeft size={20} />
+          <span className="font-medium">Back to Surahs</span>
+        </button>
+
+        <select
+          value={selectedTranslation}
+          onChange={(e) => setTranslation(e.target.value as TranslationOption)}
+          className="bg-card-bg border border-card-border rounded-xl px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm outline-none focus:border-brand-500 shadow-sm text-foreground/80 font-medium cursor-pointer"
+        >
+          <option value="en.sahih">English (Sahih)</option>
+          <option value="en.asad">English (Asad)</option>
+          <option value="hi.hindi">Hindi</option>
+        </select>
+      </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-40 opacity-50">
@@ -98,7 +112,7 @@ export default function SurahDetailClient({ id }: { id: number }) {
              You are offline and haven't downloaded this Surah yet. Please connect to the internet to read or download it.
            </p>
         </div>
-      ) : arabicData && englishData ? (
+      ) : arabicData && translationData ? (
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -159,7 +173,7 @@ export default function SurahDetailClient({ id }: { id: number }) {
                 </p>
                 
                 <p className="text-foreground/70 text-sm md:text-base leading-relaxed">
-                  {englishData.ayahs[i]?.text}
+                  {translationData.ayahs[i]?.text}
                 </p>
               </motion.div>
             ))}

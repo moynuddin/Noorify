@@ -1,14 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-
-// ─── Constants ───────────────────────────────────────────────────────
-const MECCA_LAT = 21.422487;
-const MECCA_LNG = 39.826206;
-
-// Low-pass filter coefficient (0 = ignore new, 1 = ignore old).
-// Lower = smoother but slower to react. 0.15 is a good balance.
-const SMOOTHING_FACTOR = 0.15;
+import { MECCA_LAT, MECCA_LNG, SMOOTHING_FACTOR } from "@/constants/qibla";
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 function toRadians(deg: number) {
