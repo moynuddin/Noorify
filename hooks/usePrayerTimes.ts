@@ -54,6 +54,37 @@ export const CALCULATION_METHODS: Record<
   Turkey: { label: "Turkey", fn: CalculationMethod.Turkey },
 };
 
+// ─── Location cache ───────────────────────────────────────────────────────────
+
+const LOCATION_CACHE_KEY = "dhikr_location_cache";
+
+interface LocationCache {
+  lat: number;
+  lng: number;
+  label: string;
+}
+
+function loadLocationCache(): LocationCache | null {
+  try {
+    const raw = localStorage.getItem(LOCATION_CACHE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as LocationCache;
+  } catch {
+    return null;
+  }
+}
+
+function saveLocationCache(lat: number, lng: number, label: string) {
+  try {
+    localStorage.setItem(
+      LOCATION_CACHE_KEY,
+      JSON.stringify({ lat, lng, label }),
+    );
+  } catch {
+    // storage not available — ignore
+  }
+}
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 interface UsePrayerTimesReturn {
@@ -81,6 +112,20 @@ export function usePrayerTimes(): UsePrayerTimesReturn {
   }>(() => {
     const supported =
       typeof window !== "undefined" && Boolean(navigator?.geolocation);
+
+    if (typeof window !== "undefined") {
+      const cached = loadLocationCache();
+      if (cached) {
+        return {
+          coords: { lat: cached.lat, lng: cached.lng },
+          label: cached.label,
+          error: null,
+          // Still attempt a fresh fetch in the background
+          isLoading: supported,
+        };
+      }
+    }
+
     return {
       coords: null,
       label: null,
@@ -149,6 +194,7 @@ export function usePrayerTimes(): UsePrayerTimesReturn {
         }
 
         if (!cancelled) {
+          saveLocationCache(latitude, longitude, label);
           setLocationState({
             coords: { lat: latitude, lng: longitude },
             label,
@@ -161,7 +207,10 @@ export function usePrayerTimes(): UsePrayerTimesReturn {
         if (!cancelled) {
           setLocationState((prev) => ({
             ...prev,
-            error: err.message || "Unable to get your location.",
+            // If we already have cached coords, silently continue using them
+            error: prev.coords
+              ? null
+              : err.message || "Unable to get your location.",
             isLoading: false,
           }));
         }

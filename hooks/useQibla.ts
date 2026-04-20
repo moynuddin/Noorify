@@ -83,25 +83,86 @@ function classifyAccuracy(event: DeviceOrientationEvent): CompassAccuracy {
 }
 
 // ─── Hook ────────────────────────────────────────────────────────────
+
+const LOCATION_CACHE_KEY = "dhikr_location_cache";
+
+interface LocationCache {
+  lat: number;
+  lng: number;
+  label: string;
+}
+
+function loadLocationCache(): LocationCache | null {
+  try {
+    const raw = localStorage.getItem(LOCATION_CACHE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as LocationCache;
+  } catch {
+    return null;
+  }
+}
+
+function saveLocationCache(lat: number, lng: number, label: string) {
+  try {
+    localStorage.setItem(
+      LOCATION_CACHE_KEY,
+      JSON.stringify({ lat, lng, label }),
+    );
+  } catch {
+    // storage not available — ignore
+  }
+}
+
 export function useQibla() {
-  const [qiblaAngle, setQiblaAngle] = useState<number | null>(null);
+  // Compute initial state from cache once via lazy useState initializers.
+  // This is the React-idiomatic way: derive correct initial values upfront
+  // instead of calling setState synchronously inside an effect.
+  const [initFromCache] = useState<{
+    qiblaAngle: number | null;
+    declination: number;
+    hasCached: boolean;
+  }>(() => {
+    if (typeof window === "undefined") {
+      return { qiblaAngle: null, declination: 0, hasCached: false };
+    }
+    const cached = loadLocationCache();
+    if (!cached) return { qiblaAngle: null, declination: 0, hasCached: false };
+    const decl = estimateMagneticDeclination(cached.lat, cached.lng);
+    return {
+      qiblaAngle: calculateQiblaBearing(cached.lat, cached.lng),
+      declination: decl,
+      hasCached: true,
+    };
+  });
+
+  const [qiblaAngle, setQiblaAngle] = useState<number | null>(
+    initFromCache.qiblaAngle,
+  );
   const [heading, setHeading] = useState<number | null>(null);
   const [rawHeading, setRawHeading] = useState<number | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [compassError, setCompassError] = useState<string | null>(null);
-  const [isLocating, setIsLocating] = useState(true);
+  const [isLocating, setIsLocating] = useState(!initFromCache.hasCached);
   const [accuracy, setAccuracy] = useState<CompassAccuracy>("unknown");
   const [needsCalibration, setNeedsCalibration] = useState(false);
-  const [declination, setDeclination] = useState(0);
+  const [declination, setDeclination] = useState(initFromCache.declination);
 
   const smoothedRef = useRef<number | null>(null);
-  const declinationRef = useRef(0);
+  // Initialize ref to match the lazy-initializer value so the compass
+  // correction is correct from the very first orientation event.
+  const declinationRef = useRef(initFromCache.declination);
+  // Track synchronously whether a cached location was applied this session.
+  // Using a ref avoids the stale-closure problem that arises when reading
+  // React state inside a geolocation error callback on iOS.
+  const hasCachedLocationRef = useRef(initFromCache.hasCached);
 
-  // ── 1. Geolocation ──────────────────────────────────────────────
+  // ── 1. Geolocation — fresh fetch, error-suppressed when cache exists ────
   useEffect(() => {
     if (!navigator.geolocation) {
-      setLocationError("Geolocation is not supported by your browser.");
-      setIsLocating(false);
+      if (!hasCachedLocationRef.current) {
+        setLocationError("Geolocation is not supported by your browser.");
+        setIsLocating(false);
+      }
       return;
     }
 
@@ -110,32 +171,45 @@ export function useQibla() {
         const { latitude, longitude } = pos.coords;
 
         // Try Aladhan Qibla API first (authoritative), fall back to local formula
+        let angle: number;
         try {
           const res = await fetch(
             `https://api.aladhan.com/v1/qibla/${latitude}/${longitude}`,
           );
           const data = await res.json();
           if (data.code === 200 && typeof data.data?.direction === "number") {
-            setQiblaAngle(data.data.direction);
+            angle = data.data.direction;
           } else {
-            setQiblaAngle(calculateQiblaBearing(latitude, longitude));
+            angle = calculateQiblaBearing(latitude, longitude);
           }
         } catch {
-          setQiblaAngle(calculateQiblaBearing(latitude, longitude));
+          angle = calculateQiblaBearing(latitude, longitude);
         }
 
         const decl = estimateMagneticDeclination(latitude, longitude);
-        setDeclination(decl);
         declinationRef.current = decl;
+        setDeclination(decl);
+        setQiblaAngle(angle);
         setIsLocating(false);
+        setLocationError(null);
+
+        // Persist so next open works without permission
+        saveLocationCache(latitude, longitude, "");
       },
       () => {
+        // hasCachedLocationRef is a ref — always reflects the current value,
+        // even inside this async callback (no stale-closure issue on iOS).
+        if (hasCachedLocationRef.current) {
+          // Silently keep showing cached data.
+          setIsLocating(false);
+          return;
+        }
         setLocationError(
           "Unable to retrieve your location. Please ensure location services are enabled.",
         );
         setIsLocating(false);
       },
-      { enableHighAccuracy: true },
+      { enableHighAccuracy: true, timeout: 15000 },
     );
   }, []);
 
