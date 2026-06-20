@@ -41,7 +41,7 @@ export default function AnalyticsPage() {
       >
         Your Progress
         {/* Global Pool Indicator */}
-        <div className="flex items-center gap-2 bg-gradient-to-r from-brand-500/10 to-brand-400/5 px-4 py-2 rounded-full border border-brand-500/20 shadow-sm">
+        <div className="flex items-center gap-2 bg-linear-to-r from-brand-500/10 to-brand-400/5 px-4 py-2 rounded-full border border-brand-500/20 shadow-sm">
           <Globe2 size={16} className="text-brand-500 animate-pulse" />
           <div className="flex flex-col">
             <span className="text-[9px] uppercase tracking-wider font-bold text-brand-600 dark:text-brand-400 leading-none">
@@ -59,7 +59,7 @@ export default function AnalyticsPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="mb-8 md:mb-12 relative overflow-hidden bg-gradient-to-br from-brand-500 text-white p-6 md:p-8 rounded-3xl md:rounded-[2rem] shadow-lg border border-brand-400/50"
+        className="mb-8 md:mb-12 relative overflow-hidden bg-linear-to-br from-brand-500 text-white p-6 md:p-8 rounded-3xl md:rounded-4xl shadow-lg border border-brand-400/50"
       >
         <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-white/10 blur-3xl rounded-full" />
 
@@ -102,7 +102,7 @@ export default function AnalyticsPage() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
-          className="bg-card-bg border border-card-border p-5 md:p-8 rounded-3xl md:rounded-[2rem] shadow-sm flex flex-col items-center justify-center"
+          className="bg-card-bg border border-card-border p-5 md:p-8 rounded-3xl md:rounded-4xl shadow-sm flex flex-col items-center justify-center"
         >
           <div className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-orange-500/10 flex items-center justify-center mb-3 md:mb-4">
             <Flame className="text-orange-500 md:w-7 md:h-7" size={20} />
@@ -119,7 +119,7 @@ export default function AnalyticsPage() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3 }}
-          className="bg-card-bg border border-card-border p-5 md:p-8 rounded-3xl md:rounded-[2rem] shadow-sm flex flex-col items-center justify-center"
+          className="bg-card-bg border border-card-border p-5 md:p-8 rounded-3xl md:rounded-4xl shadow-sm flex flex-col items-center justify-center"
         >
           <div className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-brand-500/10 flex items-center justify-center mb-3 md:mb-4">
             <Trophy className="text-brand-500 md:w-7 md:h-7" size={20} />
@@ -137,7 +137,7 @@ export default function AnalyticsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="bg-card-bg border border-card-border p-6 md:p-10 rounded-3xl md:rounded-[2rem] shadow-sm mb-8"
+        className="bg-card-bg border border-card-border p-6 md:p-10 rounded-3xl md:rounded-4xl shadow-sm mb-8"
       >
         <div className="flex items-center gap-2 mb-6">
           <Calendar className="text-brand-500 md:w-6 md:h-6" size={18} />
@@ -154,7 +154,7 @@ export default function AnalyticsPage() {
                 key={day.date}
                 className="flex flex-col items-center flex-1 gap-3 md:gap-4 relative group"
               >
-                <div className="w-full relative h-[120px] md:h-[180px] bg-foreground/5 rounded-t-lg md:rounded-t-xl overflow-hidden flex items-end">
+                <div className="w-full relative h-30 md:h-45 bg-foreground/5 rounded-t-lg md:rounded-t-xl overflow-hidden flex items-end">
                   <motion.div
                     initial={{ height: 0 }}
                     animate={{ height: `${heightPercentage}%` }}
